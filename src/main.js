@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+/*import { createApp } from 'vue'
 import Demo from './Demo/Demo.vue'
 
 const app = createApp(Demo);
@@ -7,3 +7,11 @@ const app = createApp(Demo);
 app.config.devtools = true;
 
 app.mount('#app');
+*/
+
+import { createApp, h } from 'vue'
+import Demo from './Demo/Demo.vue'
+import wrapper from "vue3-webcomponent-wrapper";
+
+const CustomElement = wrapper(Demo, createApp, h);
+window.customElements.define("vue-document-editor", CustomElement);
