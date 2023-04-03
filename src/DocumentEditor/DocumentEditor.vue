@@ -9,7 +9,14 @@
     </div>
 
     <!-- Document editor -->
-    <div class="content" ref="content" :contenteditable="editable" :style="page_style(-1)" @input="input" @keyup="process_current_text_style" @keydown="keydown">
+    <div class="content" ref="content"
+         :contenteditable="editable"
+         :style="page_style(-1)"
+         @input="input"
+         @keyup="process_current_text_style"
+         @keydown="keydown"
+         @paste="paste"
+    >
       <!-- This is a Vue "hoisted" static <div> which contains every page of the document and can be modified by the DOM -->
     </div>
 
@@ -21,6 +28,7 @@
 <script>
 import { defineCustomElement } from 'vue';
 import { move_children_forward_recursively, move_children_backwards_with_merging } from './imports/page-transition-mgmt.js';
+import { clearHtmlString } from "@/DocumentEditor/imports/clear-html-string";
 
 export default {
 
@@ -289,6 +297,13 @@ export default {
       }
     },
 
+    paste (e) {
+      e.preventDefault();
+      let text = e.clipboardData.getData('text/html');
+      text = clearHtmlString(text);
+      document.execCommand('insertHtml', false, text)
+    },
+
     // Emit content change to parent
     emit_new_content () {
       let removed_pages_flag = false; // flag to call reset_content if some pages were removed by the user
@@ -432,7 +447,10 @@ export default {
         }
         // Update page properties
         page.elt.dataset.contentIdx = page.content_idx;
-        if(!this.printing_mode) page.elt.style = Object.entries(this.page_style(page_idx, page.template ? false : true)).map(([k, v]) => k.replace(/[A-Z]/g, match => ("-"+match.toLowerCase()))+":"+v).join(';'); // (convert page_style to CSS string)
+        if(!this.printing_mode && !page.elt.style.cssText) {
+          // @TODO: this should be called when zoom or any that kind of changes happens to the pages
+          page.elt.style = Object.entries(this.page_style(page_idx, page.template ? false : true)).map(([k, v]) => k.replace(/[A-Z]/g, match => ("-"+match.toLowerCase()))+":"+v).join(';');
+        } // (convert page_style to CSS string)
         page.elt.contentEditable = (this.editable && !page.template) ? true : false;
       }
     },

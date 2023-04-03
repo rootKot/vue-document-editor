@@ -37,15 +37,65 @@ function move_children_forward_recursively (child, child_sibling, stop_condition
 
     // if it is a text node, move its content to next page word(/space) by word
     if(sub_child.nodeType == Node.TEXT_NODE){
-      const sub_child_hashes = sub_child.textContent.match(/(\s|\S+)/g);
+      let sub_child_hashes = sub_child.textContent.match(/(\s|\S+)/g);
+      // console.log({sub_child_hashes})
+
       const sub_child_continuation = document.createTextNode('');
       child_sibling.prepend(sub_child_continuation);
-      const l = sub_child_hashes ? sub_child_hashes.length : 0;
+      let l = sub_child_hashes ? sub_child_hashes.length : 0;
+
+      let j = 0;
+      let sub_child_hashes_temp = [];
       for(let i = 0; i < l; i++) {
-        if(i == l - 1 && !not_first_child) return; // never remove the first word of the page
-        sub_child.textContent = sub_child_hashes.slice(0, l - i - 1).join('');
-        sub_child_continuation.textContent = sub_child_hashes.slice(l - i - 1, l).join('');
-        if(stop_condition()) return;
+        if (sub_child_hashes[i] === ' ' && i !== 0) {
+          continue;
+        }
+        if (i + 1 < l && sub_child_hashes[i + 1] === ' ') {
+          sub_child_hashes_temp[j] = sub_child_hashes[i] + ' ';
+          i++;
+        } else {
+          sub_child_hashes_temp[j] = sub_child_hashes[i];
+        }
+        j ++;
+      }
+
+      sub_child_hashes = sub_child_hashes_temp;
+      // console.log({sub_child_hashes_temp})
+      l = sub_child_hashes ? sub_child_hashes.length : 0;
+      let sub_child_hashes_splice_string_start = '';
+      let sub_child_hashes_splice_string_end = '';
+      let sub_child_hashes_spliced_strings_start = [];
+      let sub_child_hashes_spliced_strings_end = [];
+
+      for(let i = 0; i < l; i++) {
+        sub_child_hashes_splice_string_start += sub_child_hashes[i];
+        sub_child_hashes_splice_string_end = sub_child_hashes[l - i - 1] + sub_child_hashes_splice_string_end;
+
+        if (i + 1 < l) {
+          sub_child_hashes_spliced_strings_start[i + 1] = sub_child_hashes_splice_string_start;
+        }
+        sub_child_hashes_spliced_strings_end[l - i - 1] = sub_child_hashes_splice_string_end;
+      }
+      sub_child_hashes_spliced_strings_start[0] = '';
+
+      // console.log({sub_child_hashes_spliced_strings_start});
+      // console.log({sub_child_hashes_spliced_strings_end});
+
+      for(let i = 0; i < l; i++) {
+        //if(i == l - 1 && !not_first_child) return; // never remove the first word of the page
+        sub_child.textContent = sub_child_hashes_spliced_strings_start[l - i - 1];
+        sub_child_continuation.textContent = l - i -1 === l ? ' ': sub_child_hashes_spliced_strings_end[l - i - 1];
+
+        //sub_child.textContent = sub_child_hashes.slice(0, sub_child_hashes_splice_pos).join('');
+        // sub_child_continuation.textContent = sub_child_hashes.slice(l - i - 1, l).join('');
+        if(stop_condition()) {
+          sub_child_hashes_spliced_strings_start = [];
+          sub_child_hashes_spliced_strings_end = [];
+          // console.log('sub_child', sub_child.textContent)
+          // console.log('sub_child_continuation', sub_child_continuation.textContent)
+
+          return;
+        }
       }
     }
 
