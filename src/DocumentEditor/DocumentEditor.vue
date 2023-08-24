@@ -243,7 +243,9 @@ export default {
             }
 
             // move the content step by step to the next page, until it fits
-            move_children_forward_recursively(page.elt, next_page_elt, () => (page.elt.clientHeight <= this.pages_height));
+            console.log('move_children_forward_recursively: Page: ' + page_idx)
+            // console.log(this.pages[page_idx])
+            move_children_forward_recursively(page, page.elt, next_page_elt, () => (page.elt.clientHeight <= this.pages_height));
           }
 
           // CLEANING
@@ -255,6 +257,16 @@ export default {
 
         // update pages in the DOM
         this.update_pages_elts();
+        // console.log('isPageHasBeenChanged', (page.elt.innerHTML === oldContent).toString())
+        // if (page.contentNotModifyNextPage) {
+        //   console.log('Content not modify next page')
+        //   page.contentNotModifyNextPage = null;
+        //   break;
+        // } else {
+        //   page.contentNotModifyNextPage = null;
+        //   console.log('Check next page')
+        // }
+        // console.log(this.pages)
       }
       
 
@@ -297,7 +309,7 @@ export default {
       }
     },
 
-    paste (e) {
+    paste (e, o) {
       e.preventDefault();
       let text = e.clipboardData.getData('text/html');
       text = clearHtmlString(text);
@@ -430,7 +442,7 @@ export default {
     css_to_string: (css) => Object.entries(css).map(([k, v]) => k.replace(/[A-Z]/g, match => ("-"+match.toLowerCase()))+":"+v).join(';'),
 
     // Update pages <div> from this.pages data
-    update_pages_elts () {
+    update_pages_elts (forceUpdatePageProperties) {
       // Removing deleted pages
       const deleted_pages = [...this.$refs.content.children].filter((page_elt) => !this.pages.find(page => (page.elt == page_elt)));
       for(const page_elt of deleted_pages) { page_elt.remove(); }
@@ -447,11 +459,18 @@ export default {
         }
         // Update page properties
         page.elt.dataset.contentIdx = page.content_idx;
-        if(!this.printing_mode && !page.elt.style.cssText) {
+        if(!page.elt.style.cssText || forceUpdatePageProperties) {
+          this.updatePageProperties(page, page_idx);
           // @TODO: this should be called when zoom or any that kind of changes happens to the pages
-          page.elt.style = Object.entries(this.page_style(page_idx, page.template ? false : true)).map(([k, v]) => k.replace(/[A-Z]/g, match => ("-"+match.toLowerCase()))+":"+v).join(';');
+          // page.elt.style = Object.entries(this.page_style(page_idx, page.template ? false : true)).map(([k, v]) => k.replace(/[A-Z]/g, match => ("-"+match.toLowerCase()))+":"+v).join(';');
         } // (convert page_style to CSS string)
-        page.elt.contentEditable = (this.editable && !page.template) ? true : false;
+        //page.elt.contentEditable = (this.editable && !page.template) ? true : false;
+      }
+    },
+
+    updatePageProperties(page, page_idx) {
+      if (!this.printing_mode) {
+        page.elt.style = Object.entries(this.page_style(page_idx, page.template ? false : true)).map(([k, v]) => k.replace(/[A-Z]/g, match => ("-"+match.toLowerCase()))+":"+v).join(';');
       }
     },
 
@@ -574,7 +593,7 @@ export default {
       }
     },
     zoom: {
-      handler () { this.update_pages_elts(); }
+      handler () { this.update_pages_elts(true); }
     }
   }
 

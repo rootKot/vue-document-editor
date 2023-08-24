@@ -101,9 +101,7 @@ export const HtmlSanitizer = new (function () {
             return newNode;
         };
 
-        console.log('doc', doc)
         let resultElement = makeSanitizedCopy(doc.body);
-        console.log('resultElement', resultElement)
 
         return resultElement.innerHTML
             .replace(/<br[^>]*>(\S)/g, "<br>\n$1")
